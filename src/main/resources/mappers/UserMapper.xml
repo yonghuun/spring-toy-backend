@@ -9,7 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!--
         username으로 사용자 조회
     -->
-    <select id="findByUsername" parameterType="string" resultType="com.toy.auth.user.vo.User">
+    <select id="findByUsername" parameterType="string" resultType="com.toy.auth.user.domain.User">
         SELECT id, username, password, role
         FROM users
         WHERE username = #{username}

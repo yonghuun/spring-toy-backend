@@ -5,10 +5,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.toy.auth.jwt.JwtUtil;
+import com.toy.auth.user.domain.User;
 import com.toy.auth.user.dto.LoginRequest;
 import com.toy.auth.user.dto.SignupRequest;
 import com.toy.auth.user.mapper.UserMapper;
-import com.toy.auth.user.vo.User;
 
 import lombok.RequiredArgsConstructor;
 

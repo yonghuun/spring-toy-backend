@@ -3,7 +3,7 @@ package com.toy.auth.user.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
-import com.toy.auth.user.vo.User;
+import com.toy.auth.user.domain.User;
 
 @Mapper
 public interface UserMapper {
