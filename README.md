@@ -1,75 +1,213 @@
-# Spring Toy Backend
+# Quest Board Toy Project
 
-Spring Boot로 인증과 Quest API를 학습하기 위한 백엔드 토이 프로젝트입니다.
+Vue 3 프론트엔드와 Spring Boot 백엔드를 분리해서 만들며 인증, JWT, 사용자별 Quest CRUD 흐름을 학습하는 토이 프로젝트입니다.
 
-프론트엔드는 별도 Vue 레포에서 관리하고, 이 백엔드는 인증 API와 이후 Quest API를 제공하는 역할로 진행합니다.
+## Repositories
 
-## 목표
+- Frontend: [vue-toy-frontend](https://github.com/yonghuun/vue-toy-frontend)
+- Backend: [spring-toy-backend](https://github.com/yonghuun/spring-toy-backend)
 
-- Spring Boot 기반 REST API 구성 익히기
-- 회원가입과 로그인 API 구현
-- BCrypt로 비밀번호 암호화하기
-- JWT 발급과 검증 흐름 만들기
-- Vue 프론트엔드에서 보호 API를 호출할 수 있도록 연결하기
-- Quest 엔터티와 CRUD API로 기능 확장하기
+## Overview
 
-## 현재 구현
+로그인한 사용자가 오늘의 미션을 추가하고, 완료한 작업을 기록으로 남기는 개인 Quest Board입니다.
 
-- 회원가입 API
-  - `POST /auth/signup`
-  - username, password 입력
-  - BCrypt password encoding
-- 로그인 API
-  - `POST /auth/login`
-  - 로그인 성공 시 JWT access token 발급
-- JWT 인증
-  - `JwtUtil`
-  - `JwtFilter`
-  - Spring Security stateless 설정
-- 보호 API
-  - `GET /users/me`
-  - JWT 인증 성공 시 현재 사용자 정보 응답
-- MyBatis 기반 사용자 저장소
-  - `UserMapper`
-  - `UserMapper.xml`
+- Vue에서 로그인/회원가입과 Quest Board 화면을 제공합니다.
+- Spring Boot에서 인증, JWT 검증, 사용자별 Quest API를 제공합니다.
+- MySQL에 사용자와 Quest 데이터를 저장합니다.
+- 완료된 Quest는 화면의 "완료된 백엔드 연동" 영역으로 이동합니다.
 
-## 프론트엔드 연동
+## Architecture
 
-프론트엔드는 별도 레포에서 관리합니다.
-
-```text
-vue-toy-frontend
+```mermaid
+flowchart LR
+    Browser[Vue Quest Board] -->|/auth, /users, /quests| Vite[Vite Dev Proxy]
+    Vite --> Spring[Spring Boot API]
+    Spring --> Security[Spring Security + JwtFilter]
+    Security --> Service[Service Layer]
+    Service --> Mapper[MyBatis Mapper]
+    Mapper --> MySQL[(MySQL)]
 ```
 
-현재 프론트에서는 로그인 후 access token을 저장하고, Quest Board 화면에서 `GET /users/me`를 호출해 보호 API 연결을 확인합니다.
+## Auth Flow
 
-## 로컬 설정
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant V as Vue
+    participant S as Spring Boot
+    participant DB as MySQL
 
-실제 DB 접속 정보는 Git에 올리지 않습니다.
+    U->>V: login form submit
+    V->>S: POST /auth/login
+    S->>DB: find user by username
+    DB-->>S: user
+    S->>S: password check + JWT create
+    S-->>V: access token
+    V->>V: save token to localStorage
+    V->>S: GET /users/me with Bearer token
+    S->>S: JwtFilter validates token
+    S-->>V: current username
+```
 
-`src/main/resources/application-example.properties`를 참고해서 로컬에 아래 파일을 생성한 뒤 값을 채워 실행합니다.
+## Quest Flow
+
+```mermaid
+sequenceDiagram
+    participant V as Vue
+    participant C as QuestController
+    participant SV as QuestService
+    participant M as QuestMapper
+    participant DB as MySQL
+
+    V->>C: GET /quests
+    C->>SV: find quests by current username
+    SV->>M: findAllByUserId(userId)
+    M->>DB: SELECT quests
+    DB-->>V: quest list
+
+    V->>C: POST /quests
+    C->>SV: create quest
+    SV->>M: insertQuest
+    M->>DB: INSERT quest
+    DB-->>V: created quest
+
+    V->>C: PATCH /quests/{id}/complete
+    C->>SV: toggle complete
+    SV->>M: updateComplete
+    M->>DB: UPDATE completed
+    DB-->>V: updated quest
+```
+
+## Tech Stack
+
+| Area | Stack |
+| --- | --- |
+| Frontend | Vue 3, Vite, Vue Router |
+| Backend | Java 17, Spring Boot 4, Spring Security |
+| Auth | JWT, BCrypt |
+| Database | MySQL |
+| Persistence | MyBatis |
+
+## Implemented Features
+
+- 회원가입
+  - `POST /auth/signup`
+  - BCrypt 비밀번호 암호화
+- 로그인
+  - `POST /auth/login`
+  - JWT access token 발급
+- 보호 API
+  - `GET /users/me`
+  - `Authentication` 기반 현재 사용자 확인
+- Quest API
+  - `GET /quests`
+  - `POST /quests`
+  - `PATCH /quests/{id}/complete`
+  - `DELETE /quests/{id}`
+- Vue Quest Board
+  - JWT 토큰 저장
+  - 사용자별 Quest 조회
+  - 미션 추가
+  - 완료/미완료 토글
+  - 삭제 전 확인
+  - 완료된 Quest 기록 분리 표시
+
+## API Summary
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/auth/signup` | 회원가입 |
+| POST | `/auth/login` | 로그인 및 JWT 발급 |
+| GET | `/users/me` | 현재 인증 사용자 확인 |
+| GET | `/quests` | 내 Quest 목록 조회 |
+| POST | `/quests` | Quest 생성 |
+| PATCH | `/quests/{id}/complete` | Quest 완료 상태 토글 |
+| DELETE | `/quests/{id}` | Quest 삭제 |
+
+## Data Model
+
+```mermaid
+erDiagram
+    USERS ||--o{ QUESTS : owns
+    USERS {
+        bigint id PK
+        varchar username
+        varchar password
+        varchar role
+    }
+    QUESTS {
+        bigint id PK
+        bigint user_id FK
+        varchar title
+        varchar memo
+        varchar difficulty
+        int xp
+        boolean completed
+        datetime created_at
+        datetime completed_at
+    }
+```
+
+## Frontend Setup
+
+```sh
+npm install
+npm run dev
+```
+
+Frontend dev server:
+
+```text
+http://127.0.0.1:5173
+```
+
+Vite proxy forwards API requests to:
+
+```text
+http://localhost:8080
+```
+
+## Backend Setup
+
+Create local config from the example file:
 
 ```text
 src/main/resources/application.properties
 ```
 
-## 실행
+Example values:
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/toy?serverTimezone=Asia/Seoul
+spring.datasource.username=your_db_username
+spring.datasource.password=your_db_password
+```
+
+Run backend:
 
 ```sh
 ./mvnw spring-boot:run
 ```
 
-## 테스트
+Run tests:
 
 ```sh
 ./mvnw test
 ```
 
-## 다음 작업
+## Current Learning Notes
 
-- JWT secret을 설정 파일 또는 환경 변수 기반으로 분리
-- Quest 엔터티 설계
-- Quest Repository/Mapper 작성
-- Quest Service/Controller 작성
-- 사용자별 Quest 조회, 생성, 완료 토글, 삭제 API 구현
-- Vue Quest Board를 백엔드 `/quests` API와 연결
+- `Controller`는 HTTP 요청/응답을 담당합니다.
+- `Service`는 현재 사용자 확인, XP 계산, 소유자 검증 같은 비즈니스 흐름을 담당합니다.
+- `Mapper`와 XML은 SQL과 DB 매핑을 담당합니다.
+- `Request DTO`는 프론트에서 들어오는 값만 받습니다.
+- `Response DTO`는 화면에 필요한 값만 내려줍니다.
+- Quest 수정/삭제는 항상 `questId`와 `userId`를 함께 확인해야 합니다.
+
+## Next Missions
+
+- 백엔드 에러 응답 형식 통일
+- Quest 입력값 검증 보강
+- JWT secret 설정 분리
+- 401 응답 시 프론트에서 로그인 화면으로 이동
+- 사용자 XP/레벨 계산을 백엔드로 이전
