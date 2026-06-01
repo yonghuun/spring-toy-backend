@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.toy.quest.mapper.QuestMapper">
+
+    <resultMap id="QuestResultMap" type="com.toy.quest.domain.Quest">
+        <id property="id" column="id" />
+        <result property="userId" column="user_id" />
+        <result property="title" column="title" />
+        <result property="memo" column="memo" />
+        <result property="difficulty" column="difficulty" />
+        <result property="xp" column="xp" />
+        <result property="completed" column="completed" />
+        <result property="createdAt" column="created_at" />
+        <result property="completedAt" column="completed_at" />
+    </resultMap>
+
+    <select id="findAllByUserId" resultMap="QuestResultMap">
+        SELECT id, user_id, title, memo, difficulty, xp, completed, created_at, completed_at
+        FROM quests
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC, id DESC
+    </select>
+
+    <select id="findByIdAndUserId" resultMap="QuestResultMap">
+        SELECT id, user_id, title, memo, difficulty, xp, completed, created_at, completed_at
+        FROM quests
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </select>
+
+    <insert id="insertQuest" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO quests(user_id, title, memo, difficulty, xp, completed, created_at, completed_at)
+        VALUES (#{userId}, #{title}, #{memo}, #{difficulty}, #{xp}, #{completed}, NOW(), #{completedAt})
+    </insert>
+
+    <update id="updateComplete">
+        UPDATE quests
+        SET completed = #{completed},
+            completed_at = CASE
+                WHEN #{completed} = TRUE THEN NOW()
+                ELSE NULL
+            END
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </update>
+
+    <delete id="deleteByIdAndUserId">
+        DELETE FROM quests
+        WHERE id = #{id}
+          AND user_id = #{userId}
+    </delete>
+
+</mapper>
