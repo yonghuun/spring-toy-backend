@@ -5,12 +5,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.toy.auth.user.dto.UserMeResponse;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
     @GetMapping("/me")
-    public String user(Authentication auth) {
-        return auth.getName() + " 님 환영합니다.";
+    public UserMeResponse user(Authentication auth) {
+        String role = auth.getAuthorities()
+                .iterator()
+                .next()
+                .getAuthority();
+        return new UserMeResponse(auth.getName(), role);
     }
+
+
 }
