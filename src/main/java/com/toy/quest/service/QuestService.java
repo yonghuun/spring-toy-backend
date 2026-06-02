@@ -2,10 +2,12 @@ package com.toy.quest.service;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import com.toy.auth.user.domain.User;
 import com.toy.auth.user.mapper.UserMapper;
+import com.toy.common.exception.BusinessException;
 import com.toy.quest.domain.Quest;
 import com.toy.quest.dto.QuestCreateRequest;
 import com.toy.quest.dto.QuestResponse;
@@ -36,7 +38,7 @@ public class QuestService {
 	public QuestResponse create(String name, QuestCreateRequest request) {
 		User user = findUserByUsername(name);
 		
-		Difficulty difficulty = Difficulty.valueOf(request.getDifficulty());
+		Difficulty difficulty = parseDifficulty(request.getDifficulty());
 		
 		Quest quest = Quest.builder()
 				.userId(user.getId())
@@ -60,7 +62,7 @@ public class QuestService {
 		Quest quest = questMapper.findByIdAndUserId(id, user.getId());
 		
 		if(quest == null) {
-			throw new RuntimeException("존재하지 않는 퀘스트");
+			throw new BusinessException("존재하지 않는 퀘스트입니다.", HttpStatus.NOT_FOUND);
 		}
 		
 		boolean nextCompleted = !quest.isCompleted();
@@ -79,7 +81,7 @@ public class QuestService {
 		
 		Quest quest = questMapper.findByIdAndUserId(id, user.getId());
 		if(quest==null) {
-			throw new RuntimeException("존재하지 않는 퀘스트");
+			throw new BusinessException("존재하지 않는 퀘스트입니다.", HttpStatus.NOT_FOUND);
 		}
 				
 		questMapper.deleteByIdAndUserId(id, user.getId());
@@ -89,10 +91,19 @@ public class QuestService {
 		User user = userMapper.findByUsername(name);
 		
 		if(user == null) {
-			throw new RuntimeException("존재하지 않는 사용자");
+            throw new BusinessException("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND);
 		}
 		
 		return user;
+	}
+
+	private Difficulty parseDifficulty(String difficulty) {
+		try{
+			return Difficulty.valueOf(difficulty);
+		} catch (IllegalArgumentException e) {
+			throw new BusinessException("난이도는 EASY, NORMAL, HARD 중 하나여야 합니다.", HttpStatus.BAD_REQUEST);
+		}
+
 	}
 
 }

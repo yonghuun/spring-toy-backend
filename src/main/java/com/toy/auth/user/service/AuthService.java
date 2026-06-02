@@ -1,6 +1,7 @@
 package com.toy.auth.user.service;
 
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +10,7 @@ import com.toy.auth.user.domain.User;
 import com.toy.auth.user.dto.LoginRequest;
 import com.toy.auth.user.dto.SignupRequest;
 import com.toy.auth.user.mapper.UserMapper;
+import com.toy.common.exception.BusinessException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,7 +31,7 @@ public class AuthService {
 		User findUser = userMapper.findByUsername(request.getUsername());
 		
 		if(findUser != null) {
-			throw new RuntimeException("이미 존재하는 아이디");
+			throw new BusinessException("이미 존재하는 아이디입니다.", HttpStatus.CONFLICT);
 		}
 		
 		// BCrypt 암호화 (매우 중요!)
@@ -56,7 +58,7 @@ public class AuthService {
 		User user = userMapper.findByUsername(request.getUsername());
 		
 		if(user == null) {
-			throw new RuntimeException("존재하지 않는 사용자");
+			throw new BusinessException("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND);
 		}
 		
 		/* BCrypt 비밀번호 비교 - 절대 equals 사용 금지
@@ -65,7 +67,7 @@ public class AuthService {
 		boolean match = passwordEncoder.matches(request.getPassword(), user.getPassword());
 		
 		if(!match) {
-			throw new RuntimeException("비밀번호 불일치");
+			throw new BusinessException("비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED);
 		}
 		
 		// JWT 발급
