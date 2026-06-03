@@ -45,6 +45,9 @@ public class SecurityConfig {
 					
 					// 회원가입 / 로그인 허용
 					.requestMatchers("/auth/signup", "/auth/login").permitAll()
+
+					// 관리자 API는 관리자 권한만 허용
+					.requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
 					
 					// 나머지는 인증 필요
 					.anyRequest()

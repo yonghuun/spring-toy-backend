@@ -1,6 +1,8 @@
 package com.toy.auth.user.mapper;
 
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import com.toy.auth.user.domain.User;
@@ -13,5 +15,8 @@ public interface UserMapper {
 	
 	// 회원가입
 	void insertUser(User user);
+	
+	List<User> findAll();
+
 
 }

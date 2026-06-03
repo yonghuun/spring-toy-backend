@@ -22,5 +22,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         INSERT INTO users(username, password, role)
         VALUES (#{username}, #{password}, #{role})
     </insert>
+    
+    <select id="findAll" resultType="com.toy.auth.user.domain.User">
+	    SELECT id, username, role
+	    FROM users
+	    ORDER BY id DESC
+	</select>
 
 </mapper>
