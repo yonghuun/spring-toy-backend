@@ -1,6 +1,6 @@
-# Quest Board Toy Project
+# Task Calendar Backend
 
-Vue 3 프론트엔드와 Spring Boot 백엔드를 분리해서 만들며 인증, JWT, 사용자별 Quest CRUD 흐름을 학습하는 토이 프로젝트입니다.
+Spring Boot와 MyBatis로 만든 개인 일정 관리 백엔드입니다. Vue 프론트엔드에서 로그인한 사용자가 날짜별 일정을 만들고, 완료 상태를 토글하고, 캘린더에 표시할 수 있도록 Task API를 제공합니다.
 
 ## Repositories
 
@@ -9,108 +9,24 @@ Vue 3 프론트엔드와 Spring Boot 백엔드를 분리해서 만들며 인증,
 
 ## Overview
 
-로그인한 사용자가 오늘의 미션을 추가하고, 완료한 작업을 기록으로 남기는 개인 Quest Board입니다.
-
-- Vue에서 로그인/회원가입과 Quest Board 화면을 제공합니다.
-- Spring Boot에서 인증, JWT 검증, 사용자별 Quest API를 제공합니다.
-- MySQL에 사용자와 Quest 데이터를 저장합니다.
-- 완료된 Quest는 화면의 "완료된 백엔드 연동" 영역으로 이동합니다.
+- JWT 기반 회원가입/로그인을 제공합니다.
+- 로그인한 사용자별로 일정 Task를 분리해서 조회합니다.
+- 일정은 `scheduledDate`, `title`, `memo`, `priority`, `completed` 정보를 가집니다.
+- Task 수정/삭제/완료 토글은 항상 `taskId`와 현재 사용자의 `userId`를 함께 확인합니다.
+- 관리자 계정은 사용자 목록 조회, 권한 변경, 삭제 처리, 복구를 할 수 있습니다.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Browser[Vue Quest Board] -->|/auth, /users, /quests| Vite[Vite Dev Proxy]
+    Browser[Vue Calendar UI] -->|/auth, /users, /tasks, /admin| Vite[Vite Dev Proxy]
     Vite --> Spring[Spring Boot API]
     Spring --> Security[Spring Security + JwtFilter]
-    Security --> Service[Service Layer]
+    Security --> Controller[Controller]
+    Controller --> Service[Service]
     Service --> Mapper[MyBatis Mapper]
     Mapper --> MySQL[(MySQL)]
 ```
-
-## Auth Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant V as Vue
-    participant S as Spring Boot
-    participant DB as MySQL
-
-    U->>V: login form submit
-    V->>S: POST /auth/login
-    S->>DB: find user by username
-    DB-->>S: user
-    S->>S: password check + JWT create
-    S-->>V: access token
-    V->>V: save token to localStorage
-    V->>S: GET /users/me with Bearer token
-    S->>S: JwtFilter validates token
-    S-->>V: current username
-```
-
-## Quest Flow
-
-```mermaid
-sequenceDiagram
-    participant V as Vue
-    participant C as QuestController
-    participant SV as QuestService
-    participant M as QuestMapper
-    participant DB as MySQL
-
-    V->>C: GET /quests
-    C->>SV: find quests by current username
-    SV->>M: findAllByUserId(userId)
-    M->>DB: SELECT quests
-    DB-->>V: quest list
-
-    V->>C: POST /quests
-    C->>SV: create quest
-    SV->>M: insertQuest
-    M->>DB: INSERT quest
-    DB-->>V: created quest
-
-    V->>C: PATCH /quests/{id}/complete
-    C->>SV: toggle complete
-    SV->>M: updateComplete
-    M->>DB: UPDATE completed
-    DB-->>V: updated quest
-```
-
-## Tech Stack
-
-| Area | Stack |
-| --- | --- |
-| Frontend | Vue 3, Vite, Vue Router |
-| Backend | Java 17, Spring Boot 4, Spring Security |
-| Auth | JWT, BCrypt |
-| Database | MySQL |
-| Persistence | MyBatis |
-
-## Implemented Features
-
-- 회원가입
-  - `POST /auth/signup`
-  - BCrypt 비밀번호 암호화
-- 로그인
-  - `POST /auth/login`
-  - JWT access token 발급
-- 보호 API
-  - `GET /users/me`
-  - `Authentication` 기반 현재 사용자 확인
-- Quest API
-  - `GET /quests`
-  - `POST /quests`
-  - `PATCH /quests/{id}/complete`
-  - `DELETE /quests/{id}`
-- Vue Quest Board
-  - JWT 토큰 저장
-  - 사용자별 Quest 조회
-  - 미션 추가
-  - 완료/미완료 토글
-  - 삭제 전 확인
-  - 완료된 Quest 기록 분리 표시
 
 ## API Summary
 
@@ -119,28 +35,107 @@ sequenceDiagram
 | POST | `/auth/signup` | 회원가입 |
 | POST | `/auth/login` | 로그인 및 JWT 발급 |
 | GET | `/users/me` | 현재 인증 사용자 확인 |
-| GET | `/quests` | 내 Quest 목록 조회 |
-| POST | `/quests` | Quest 생성 |
-| PATCH | `/quests/{id}/complete` | Quest 완료 상태 토글 |
-| DELETE | `/quests/{id}` | Quest 삭제 |
+| GET | `/tasks` | 내 일정 목록 조회 |
+| POST | `/tasks` | 일정 생성 |
+| PATCH | `/tasks/{id}/complete` | 일정 완료 상태 토글 |
+| DELETE | `/tasks/{id}` | 일정 삭제 |
+| GET | `/admin/users` | 사용자 목록 조회 |
+| PATCH | `/admin/users/{userId}/role` | 사용자 권한 변경 |
+| DELETE | `/admin/users/{userId}` | 사용자 삭제 처리 |
+| PATCH | `/admin/users/{userId}/restore` | 삭제 사용자 복구 |
+
+## Task API
+
+모든 Task API는 `Authorization: Bearer {token}` 헤더가 필요합니다.
+
+### Create Task
+
+```http
+POST /tasks
+Content-Type: application/json
+Authorization: Bearer {token}
+```
+
+```json
+{
+  "title": "오전 회의 준비",
+  "memo": "자료 확인",
+  "scheduledDate": "2026-06-04",
+  "priority": "NORMAL"
+}
+```
+
+`priority` 허용값:
+
+- `LOW`
+- `NORMAL`
+- `HIGH`
+
+`scheduledDate`는 `yyyy-MM-dd` 형식이어야 합니다.
+
+### Task Response
+
+```json
+{
+  "id": 1,
+  "title": "오전 회의 준비",
+  "memo": "자료 확인",
+  "scheduledDate": "2026-06-04",
+  "priority": "NORMAL",
+  "priorityLabel": "Normal",
+  "xp": 35,
+  "completed": false,
+  "createdAt": "2026-06-04 21:00:00",
+  "completedAt": null
+}
+```
+
+## Task Flow
+
+```mermaid
+sequenceDiagram
+    participant V as Vue
+    participant C as TaskController
+    participant S as TaskService
+    participant M as TaskMapper
+    participant DB as MySQL
+
+    V->>C: POST /tasks
+    C->>S: create(username, request)
+    S->>S: validate priority and scheduledDate
+    S->>M: insertTask(task)
+    M->>DB: INSERT INTO tasks
+    S->>M: findByIdAndUserId(taskId, userId)
+    M->>DB: SELECT task by owner
+    DB-->>V: created task
+
+    V->>C: PATCH /tasks/{id}/complete
+    C->>S: toggleComplete(username, id)
+    S->>M: findByIdAndUserId(id, userId)
+    S->>M: updateComplete(task)
+    DB-->>V: updated task
+```
 
 ## Data Model
 
 ```mermaid
 erDiagram
-    USERS ||--o{ QUESTS : owns
+    USERS ||--o{ TASKS : owns
     USERS {
         bigint id PK
         varchar username
         varchar password
         varchar role
+        varchar status
+        datetime deleted_at
     }
-    QUESTS {
+    TASKS {
         bigint id PK
         bigint user_id FK
         varchar title
         varchar memo
-        varchar difficulty
+        date scheduled_date
+        varchar priority
         int xp
         boolean completed
         datetime created_at
@@ -148,34 +143,55 @@ erDiagram
     }
 ```
 
-## Frontend Setup
+## Database
 
-```sh
-npm install
-npm run dev
+현재 `schema.sql` 기준 Task 테이블:
+
+```sql
+CREATE TABLE tasks (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    memo VARCHAR(255),
+    scheduled_date DATE NOT NULL,
+    priority VARCHAR(20) NOT NULL,
+    xp INT NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL,
+    completed_at DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 ```
 
-Frontend dev server:
+기존 `tasks` 데이터를 지우고 새 스키마로 다시 만들 때:
 
-```text
-http://127.0.0.1:5173
+```sql
+DROP TABLE IF EXISTS tasks;
+
+CREATE TABLE tasks (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    memo VARCHAR(255),
+    scheduled_date DATE NOT NULL,
+    priority VARCHAR(20) NOT NULL,
+    xp INT NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL,
+    completed_at DATETIME NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 ```
 
-Vite proxy forwards API requests to:
+## Setup
 
-```text
-http://localhost:8080
-```
-
-## Backend Setup
-
-Create local config from the example file:
+Create local config:
 
 ```text
 src/main/resources/application.properties
 ```
 
-Example values:
+Example:
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/toy?serverTimezone=Asia/Seoul
@@ -195,19 +211,24 @@ Run tests:
 ./mvnw test
 ```
 
-## Current Learning Notes
+Frontend dev server usually proxies API requests to:
 
-- `Controller`는 HTTP 요청/응답을 담당합니다.
-- `Service`는 현재 사용자 확인, XP 계산, 소유자 검증 같은 비즈니스 흐름을 담당합니다.
-- `Mapper`와 XML은 SQL과 DB 매핑을 담당합니다.
+```text
+http://localhost:8080
+```
+
+## Learning Notes
+
+- `Controller`는 HTTP 요청과 인증 객체를 받아 `Service`로 넘깁니다.
+- `Service`는 현재 사용자 확인, 입력값 검증, 소유자 검증, 완료 상태 변경을 담당합니다.
+- `Mapper`와 XML은 SQL과 DB 컬럼 매핑을 담당합니다.
 - `Request DTO`는 프론트에서 들어오는 값만 받습니다.
-- `Response DTO`는 화면에 필요한 값만 내려줍니다.
-- Quest 수정/삭제는 항상 `questId`와 `userId`를 함께 확인해야 합니다.
+- `Response DTO`는 프론트 캘린더에 필요한 값을 내려줍니다.
+- `scheduledDate`는 캘린더 표시를 위한 핵심 필드입니다.
 
-## Next Missions
+## Next
 
-- 백엔드 에러 응답 형식 통일
-- Quest 입력값 검증 보강
+- 일정 수정 API 추가
+- 날짜 범위별 Task 조회 API 추가
 - JWT secret 설정 분리
-- 401 응답 시 프론트에서 로그인 화면으로 이동
-- 사용자 XP/레벨 계산을 백엔드로 이전
+- 테스트 코드 보강
