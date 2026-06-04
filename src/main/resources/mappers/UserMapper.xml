@@ -10,7 +10,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         username으로 사용자 조회
     -->
     <select id="findByUsername" parameterType="string" resultType="com.toy.auth.user.domain.User">
-        SELECT id, username, password, role
+       SELECT id, username, password, role
         FROM users
         WHERE username = #{username}
     </select>
@@ -28,5 +28,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	    FROM users
 	    ORDER BY id DESC
 	</select>
+	
+	<select id="findById" parameterType="long" resultType="com.toy.auth.user.domain.User">
+        SELECT id, username, role
+        FROM users
+        WHERE id = #{userId}
+    </select>
+	
+	<update id="updateRole">
+		update users
+		set role = #{role}
+		where id = #{userId}
+	</update>
 
 </mapper>

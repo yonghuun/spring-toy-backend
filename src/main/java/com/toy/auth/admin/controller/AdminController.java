@@ -4,12 +4,17 @@ import java.util.List;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.toy.auth.admin.dto.AdminUpdateRoleRequest;
 import com.toy.auth.admin.dto.AdminUserResponse;
 import com.toy.auth.admin.service.AdminService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -24,6 +29,8 @@ public class AdminController {
 		return adminService.getUsers();
 	}
 	
-	
-
+	@PatchMapping("/users/{userId}/role")
+	public AdminUserResponse updateUserRole(Authentication auth, @PathVariable Long userId, @Valid @RequestBody AdminUpdateRoleRequest request) {
+		return adminService.updateUserRole(auth.getName(), userId, request);
+	}
 }

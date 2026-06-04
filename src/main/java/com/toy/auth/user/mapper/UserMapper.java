@@ -4,6 +4,7 @@ package com.toy.auth.user.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import com.toy.auth.user.domain.User;
 
@@ -17,6 +18,10 @@ public interface UserMapper {
 	void insertUser(User user);
 	
 	List<User> findAll();
+
+	User findById(@Param("userId") Long userId);
+	
+	void updateRole(@Param("userId") Long userId, @Param("role") String role);
 
 
 }
