@@ -6,7 +6,10 @@ CREATE TABLE users (
 
     password VARCHAR(255) NOT NULL,
 
-    role VARCHAR(30) NOT NULL
+    role VARCHAR(30) NOT NULL,
+
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+    deleted_at DATETIME NULL
 );
 
 CREATE TABLE quests (
@@ -23,4 +26,3 @@ CREATE TABLE quests (
     FOREIGN KEY (user_id) REFERENCES users(id)    
     
 );
-

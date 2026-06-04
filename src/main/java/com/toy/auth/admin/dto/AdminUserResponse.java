@@ -12,12 +12,14 @@ public class AdminUserResponse {
 	private long userId;
 	private String username;
 	private String role;
+	private String status;
 	
 	public static AdminUserResponse from(User user) {
 		return new AdminUserResponse(
 				user.getId(),
 				user.getUsername(),
-				user.getRole()
+				user.getRole(),
+				user.getStatus()
 		);
 	}
 

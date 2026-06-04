@@ -20,8 +20,12 @@ public interface UserMapper {
 	List<User> findAll();
 
 	User findById(@Param("userId") Long userId);
-	
+
 	void updateRole(@Param("userId") Long userId, @Param("role") String role);
+
+	void softDeleteUser(@Param("userId") Long userId);
+
+	void restoreUser(@Param("userId") Long userId);
 
 
 }

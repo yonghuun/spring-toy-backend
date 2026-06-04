@@ -25,4 +25,9 @@ public class User {
 	// 사용자 권한
 	private String role;
 
+	// 사용자 상태 (ACTIVE, DELETED)
+	private String status;
+
+	// 삭제된 사용자일 경우 삭제 시간 기록
+	private String deletedAt;
 }

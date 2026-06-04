@@ -6,11 +6,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
 <mapper namespace="com.toy.auth.user.mapper.UserMapper">
 
+	<resultMap id="UserResultMap" type="com.toy.auth.user.domain.User">
+		<id property="id" column="id" />
+		<result property="username" column="username" />
+		<result property="password" column="password" />
+		<result property="role" column="role" />
+		<result property="status" column="status" />
+		<result property="deletedAt" column="deleted_at" />
+	</resultMap>
+
     <!--
         username으로 사용자 조회
     -->
-    <select id="findByUsername" parameterType="string" resultType="com.toy.auth.user.domain.User">
-       SELECT id, username, password, role
+    <select id="findByUsername" parameterType="string" resultMap="UserResultMap">
+        SELECT id, username, password, role, status, deleted_at
         FROM users
         WHERE username = #{username}
     </select>
@@ -23,14 +32,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         VALUES (#{username}, #{password}, #{role})
     </insert>
     
-    <select id="findAll" resultType="com.toy.auth.user.domain.User">
-	    SELECT id, username, role
+    <select id="findAll" resultMap="UserResultMap">
+	    SELECT id, username, role, status, deleted_at
 	    FROM users
 	    ORDER BY id DESC
 	</select>
 	
-	<select id="findById" parameterType="long" resultType="com.toy.auth.user.domain.User">
-        SELECT id, username, role
+	<select id="findById" parameterType="long" resultMap="UserResultMap">
+        SELECT id, username, role, status, deleted_at
         FROM users
         WHERE id = #{userId}
     </select>
@@ -40,5 +49,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		set role = #{role}
 		where id = #{userId}
 	</update>
+	
+    <update id="softDeleteUser">
+        update users
+        set status = 'DELETED', deleted_at = now()
+        where id = #{userId}
+    </update>
+
+    <update id="restoreUser">
+        update users
+        set status = 'ACTIVE', deleted_at = NULL
+        where id = #{userId}
+    </update>
 
 </mapper>

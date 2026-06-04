@@ -59,4 +59,42 @@ public class AdminService {
 		return AdminUserResponse.from(updatedUser);
 	}
 
+
+	public void softDeleteUser(String adminUsername, Long userId) {
+		User targetUser = userMapper.findById(userId);
+
+		if (targetUser == null) {
+			throw new BusinessException("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND);
+		}
+
+		if (targetUser.getUsername().equals(adminUsername)) {
+			throw new BusinessException("자기 자신은 삭제할 수 없습니다.", HttpStatus.BAD_REQUEST);
+		}
+
+		if("DELETED".equals(targetUser.getStatus())) {
+			throw new BusinessException("이미 삭제된 사용자입니다.", HttpStatus.BAD_REQUEST);
+		}
+
+		userMapper.softDeleteUser(userId);
+	}
+
+
+
+	public AdminUserResponse restoreUser(String adminUsername, Long userId) {
+		User targetUser = userMapper.findById(userId);
+
+		if (targetUser == null) {
+			throw new BusinessException("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND);
+		}
+
+		if(!"DELETED".equals(targetUser.getStatus())) {
+	        throw new BusinessException("삭제된 사용자만 복구할 수 있습니다.", HttpStatus.BAD_REQUEST);
+		}
+		
+	    userMapper.restoreUser(userId);
+		
+		User restoreUser = userMapper.findById(userId);
+
+		return AdminUserResponse.from(restoreUser);
+	}
 }

@@ -60,6 +60,10 @@ public class AuthService {
 		if(user == null) {
 			throw new BusinessException("존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND);
 		}
+
+		if("DELETED".equals(user.getStatus())) {
+			throw new BusinessException("삭제된 사용자입니다.", HttpStatus.UNAUTHORIZED);
+		}
 		
 		/* BCrypt 비밀번호 비교 - 절대 equals 사용 금지
 		 * DB에는 암호화된 BCrypt 문자열이 저장되어 있기 때문에 반드시 passwordEncoder.matches() 사용
