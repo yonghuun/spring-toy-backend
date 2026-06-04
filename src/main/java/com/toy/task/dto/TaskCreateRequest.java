@@ -1,4 +1,4 @@
-package com.toy.quest.dto;
+package com.toy.task.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,7 +8,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class QuestCreateRequest {
+public class TaskCreateRequest {
 
     @NotBlank
     @Size(max = 100)
@@ -17,7 +17,10 @@ public class QuestCreateRequest {
     @Size(max = 255)
     private String memo;
 
+    @NotBlank
+    private String scheduledDate;
+
     @NotNull
-    private String difficulty;
+    private String priority;
 
 }

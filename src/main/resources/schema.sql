@@ -12,13 +12,14 @@ CREATE TABLE users (
     deleted_at DATETIME NULL
 );
 
-CREATE TABLE quests (
+CREATE TABLE tasks (
 
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
     title VARCHAR(100) NOT NULL,
     memo VARCHAR(255),
-    difficulty VARCHAR(20) NOT NULL,
+    scheduled_date DATE NOT NULL,
+    priority VARCHAR(20) NOT NULL,
     xp INT NOT NULL,
     completed BOOLEAN NOT NULL DEFAULT FALSE,
     created_at DATETIME NOT NULL,

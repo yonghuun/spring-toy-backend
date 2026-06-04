@@ -1,13 +1,13 @@
-package com.toy.quest.type;
+package com.toy.task.type;
 
-public enum Difficulty {
-    EASY(20),
+public enum Priority {
+    LOW(20),
     NORMAL(35),
-    HARD(55);
+    HIGH(55);
 
     private final int xp;
 
-    Difficulty(int xp) {
+    Priority(int xp) {
         this.xp = xp;
     }
 

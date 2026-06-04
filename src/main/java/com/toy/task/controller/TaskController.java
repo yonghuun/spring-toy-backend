@@ -1,4 +1,4 @@
-package com.toy.quest.controller;
+package com.toy.task.controller;
 
 import java.util.List;
 
@@ -12,38 +12,38 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.toy.quest.dto.QuestCreateRequest;
-import com.toy.quest.dto.QuestResponse;
-import com.toy.quest.service.QuestService;
+import com.toy.task.dto.TaskCreateRequest;
+import com.toy.task.dto.TaskResponse;
+import com.toy.task.service.TaskService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/quests")
+@RequestMapping("/tasks")
 @RequiredArgsConstructor
-public class QuestController {
+public class TaskController {
 	
-    private final QuestService questService;
+    private final TaskService taskService;
 	
     @GetMapping
-    public List<QuestResponse> getQuests(Authentication auth) {
-    	return questService.findAllByUsername(auth.getName());
+    public List<TaskResponse> getTasks(Authentication auth) {
+    	return taskService.findAllByUsername(auth.getName());
     }
     
     @PostMapping
-    public QuestResponse create(Authentication auth, @Valid @RequestBody QuestCreateRequest request) {
-    	return questService.create(auth.getName(), request);
+    public TaskResponse create(Authentication auth, @Valid @RequestBody TaskCreateRequest request) {
+    	return taskService.create(auth.getName(), request);
     }
     
     @PatchMapping("/{id}/complete")
-    public QuestResponse toggleComplete(Authentication auth, @PathVariable long id) {
-    	return questService.toggleComplete(auth.getName(), id);
+    public TaskResponse toggleComplete(Authentication auth, @PathVariable long id) {
+    	return taskService.toggleComplete(auth.getName(), id);
     }
 
     @DeleteMapping("/{id}")
     public void delete(Authentication auth, @PathVariable long id){
-        questService.delete(auth.getName(), id);
+        taskService.delete(auth.getName(), id);
     }
 	
 
